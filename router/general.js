@@ -3,7 +3,113 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
+const general = express.Router();
 
+
+general.get('/', async (req, res) => {
+  try {
+     
+    const getBooks = () => {
+      return new Promise((resolve, reject) => {
+        if (books) {
+          resolve(books);
+        } else {
+          reject("Books not found");
+        }
+      });
+    };
+
+    const bookList = await getBooks();
+    return res.status(200).json(bookList);
+
+  } catch (error) {
+    return res.status(500).json({ message: error });
+  }
+});
+
+general.get('/isbn/:isbn', async (req, res) => {
+  const isbn = req.params.isbn;
+
+  try {
+    const getBookByIsbn = (isbn) => {
+      return new Promise((resolve, reject) => {
+        if (books[isbn]) {
+          resolve(books[isbn]);
+        } else {
+          reject("Book not found for the given ISBN");
+        }
+      });
+    };
+
+    const book = await getBookByIsbn(isbn);
+    return res.status(200).json(book);
+
+  } catch (error) {
+    return res.status(404).json({ message: error });
+  }
+});
+
+general.get('/author/:author', async (req, res) => {
+    const authorParam = req.params.author.toLowerCase();
+    
+    try {
+        const getBooksByAuthor = () => {
+        return new Promise((resolve, reject) => {
+            const matchingBooks = [];
+
+            Object.keys(books).forEach((isbn) => {
+                const book = books[isbn];
+                if (book.author.toLowerCase() === authorParam) {
+                    matchingBooks.push({ isbn, ...book});
+                }
+            });
+
+            if (matchingBooks.length > 0) {
+                resolve(matchingBooks);
+            } else {
+            reject("Book not found for the given author");
+            }
+        });
+    };
+
+    const results = await getBooksByAuthor();
+    return res.status(200).json(results);
+
+    } catch(error){
+        return res.status(404).json({ massage: error })
+    }
+});
+
+general.get('/title/:title', async (req, res) => {
+    const titleParam = req.params.title.toLowerCase();
+    
+    try {
+        const getBooksByTitle = () => {
+        return new Promise((resolve, reject) => {
+            const matchingBooks = [];
+
+            Object.keys(books).forEach((isbn) => {
+                const book = books[isbn];
+                if (book.title.toLowerCase() === titleParam) {
+                    matchingBooks.push({ isbn, ...book});
+                }
+            });
+
+            if (matchingBooks.length > 0) {
+                resolve(matchingBooks);
+            } else {
+            reject("Book not found for the given title");
+            }
+        });
+    };
+
+    const results = await getBooksByTitle();
+    return res.status(200).json(results);
+
+    } catch(error){
+        return res.status(404).json({ massage: error })
+    }
+});
 
 public_users.post("/register", (req, res) => {
     const { username, password } = req.body; // リクエストボディから取得
